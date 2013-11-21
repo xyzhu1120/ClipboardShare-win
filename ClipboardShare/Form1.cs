@@ -18,7 +18,7 @@ namespace ClipboardShare
         public Form1()
         {
             InitializeComponent();
-            ns = new NetworkService();
+            ns = NetworkService.Instance;
             nextClipboardViewer = (IntPtr)SetClipboardViewer((int)
                          this.Handle);
         }
@@ -53,7 +53,7 @@ namespace ClipboardShare
                         ns.SendMessage(msg.ToString());
                         // do something with it
                     } else if(iData.GetDataPresent(DataFormats.FileDrop)){
-
+                        Console.WriteLine("file");
                     }
                     
                     SendMessage(nextClipboardViewer, m.Msg, m.WParam,

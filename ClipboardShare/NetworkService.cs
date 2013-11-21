@@ -13,10 +13,37 @@ namespace ClipboardShare
     {
         private static byte[] result = new byte[1024];
         private static int myProt = 8885;
+        private static Object syncRoot = new Object();
+        private static NetworkService instance;
+        private static bool _connected = false;
         static Socket serverSocket;
         static Socket clientSocket;
 
-        public NetworkService()
+        public static bool connected
+        {
+            get
+            {
+                return _connected;
+            }
+        }
+
+        public static NetworkService Instance
+        {
+            get
+            {
+                if (instance == null)
+                {
+                    lock (syncRoot)
+                    {
+                        if (instance == null)
+                            instance = new NetworkService();
+                    }
+                }
+                return instance;
+            }
+        }
+
+        private NetworkService()
         {
             this.initial();
         }
@@ -56,6 +83,7 @@ namespace ClipboardShare
                     Thread receiveThread = new Thread(ReceiveMessage);
                     receiveThread.IsBackground = true;
                     receiveThread.Start(clientSocket);
+                    _connected = true;
                 }
             }
         }
@@ -79,6 +107,14 @@ namespace ClipboardShare
                     break;
                 }
             }
-        }  
+        }
+
+        ~NetworkService()
+        {
+            if(clientSocket != null)
+                clientSocket.Close();
+            if(serverSocket != null)
+                serverSocket.Close();
+        }
     }
 }
