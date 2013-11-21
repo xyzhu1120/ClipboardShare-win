@@ -73,30 +73,45 @@ namespace ClipboardShare
 
         private static void ListenClientConnect()
         {
+            Socket tmp;
             while (true)
             {
+
+                tmp = serverSocket.Accept();
                 if (clientSocket == null)
                 {
-                    clientSocket = serverSocket.Accept();
                     Console.WriteLine("Receive a TCP connection");
+                    clientSocket = tmp;
                     clientSocket.Send(Encoding.ASCII.GetBytes("Server Say Hello"));
                     Thread receiveThread = new Thread(ReceiveMessage);
                     receiveThread.IsBackground = true;
                     receiveThread.Start(clientSocket);
                     _connected = true;
                 }
+                else
+                {
+                    tmp.Shutdown(SocketShutdown.Both);
+                    tmp.Close();
+                }
             }
         }
 
-        private static void ReceiveMessage(object clientSocket)
+        private static void ReceiveMessage(object tmpclientSocket)
         {
-            Socket myClientSocket = (Socket)clientSocket;
+            Socket myClientSocket = (Socket)tmpclientSocket;
             while (true)
             {
                 try
                 {
                     //通过clientSocket接收数据  
                     int receiveNumber = myClientSocket.Receive(result);
+                    if (receiveNumber == 0)
+                    {
+                        Console.WriteLine("The connection is shutdown!");
+                        myClientSocket.Close();
+                        clientSocket = null;
+                        break;
+                    }
                     Console.WriteLine("接收客户端{0}消息{1}", myClientSocket.RemoteEndPoint.ToString(), Encoding.UTF8.GetString(result, 0, receiveNumber));
                 }
                 catch (Exception ex)

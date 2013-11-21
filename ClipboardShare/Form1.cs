@@ -15,6 +15,8 @@ namespace ClipboardShare
     {
         IntPtr nextClipboardViewer;
         NetworkService ns;
+        String lastcopy = "";
+
         public Form1()
         {
             InitializeComponent();
@@ -48,12 +50,21 @@ namespace ClipboardShare
                     if (iData.GetDataPresent(DataFormats.Text))
                     {
                         string text = (string)iData.GetData(DataFormats.Text);      // Clipboard text
-                        Message msg = new Message(Message.TEXT, text);
-                        this.textBox1.Text = text;
-                        ns.SendMessage(msg.ToString());
+                        if (!lastcopy.Equals(text))
+                        {
+                            Message msg = new Message(Message.TEXT, text);
+                            this.textBox1.Text = text;
+                            ns.SendMessage(msg.ToString());
+                            lastcopy = text;
+                        }
                         // do something with it
                     } else if(iData.GetDataPresent(DataFormats.FileDrop)){
                         Console.WriteLine("file");
+                        System.Collections.Specialized.StringCollection list = Clipboard.GetFileDropList();
+                        string tmp = list[0];
+                        Message msg = new Message(Message.FILE, list[0]);
+                        ns.SendMessage(msg.ToString());
+                        Console.WriteLine(list[0]);
                     }
                     
                     SendMessage(nextClipboardViewer, m.Msg, m.WParam,
