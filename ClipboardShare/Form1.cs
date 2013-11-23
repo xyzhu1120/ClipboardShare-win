@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Runtime.InteropServices;
+using System.IO;
 
 namespace ClipboardShare
 {
@@ -16,11 +17,13 @@ namespace ClipboardShare
         IntPtr nextClipboardViewer;
         NetworkService ns;
         String lastcopy = "";
+        String currentFileName;
 
         public Form1()
         {
             InitializeComponent();
             ns = NetworkService.Instance;
+            ns.setDelegate(ReceiveMsgHander);
             nextClipboardViewer = (IntPtr)SetClipboardViewer((int)
                          this.Handle);
         }
@@ -28,15 +31,13 @@ namespace ClipboardShare
         [DllImport("User32.dll")]
         protected static extern int SetClipboardViewer(int hWndNewViewer);
         [DllImport("User32.dll", CharSet = CharSet.Auto)]
-        public static extern bool
-               ChangeClipboardChain(IntPtr hWndRemove,
+        public static extern bool ChangeClipboardChain(IntPtr hWndRemove,
                                     IntPtr hWndNewNext);
         [DllImport("user32.dll", CharSet = CharSet.Auto)]
         public static extern int SendMessage(IntPtr hwnd, int wMsg,
                                              IntPtr wParam,
                                              IntPtr lParam);
-        protected override void
-          WndProc(ref System.Windows.Forms.Message m)
+        protected override void WndProc(ref System.Windows.Forms.Message m)
         {
             // defined in winuser.h
             const int WM_DRAWCLIPBOARD = 0x308;
@@ -62,6 +63,7 @@ namespace ClipboardShare
                         Console.WriteLine("file");
                         System.Collections.Specialized.StringCollection list = Clipboard.GetFileDropList();
                         string tmp = list[0];
+                        currentFileName = tmp;
                         Message msg = new Message(Message.FILE, list[0]);
                         ns.SendMessage(msg.ToString());
                         Console.WriteLine(list[0]);
@@ -93,6 +95,15 @@ namespace ClipboardShare
         private void button1_Click(object sender, EventArgs e)
         {
             ns.SendMessage("test");
+        }
+
+        void ReceiveMsgHander(Message msg)
+        {
+            if (msg.type.Equals(Message.FILERET))
+            {
+                ns.SendFile(currentFileName);
+                ns.SendMessage(new Message(Message.FILEREADY, "").ToString());
+            }
         }
     }
 

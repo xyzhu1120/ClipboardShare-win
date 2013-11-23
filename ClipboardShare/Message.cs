@@ -6,10 +6,12 @@ using System.Threading.Tasks;
 
 namespace ClipboardShare
 {
-    class Message
+    public class Message
     {
         public static readonly string TEXT = "TEXT";
         public static readonly string FILE = "FILE";
+        public static readonly string FILERET = "FILERET";
+        public static readonly string FILEREADY = "FILEREADY";
         public string type{get; set;}
         public string content{get; set;}
 
@@ -27,7 +29,12 @@ namespace ClipboardShare
             type = msg.Substring(0, pos);
             oldpos = pos;
             pos = msg.IndexOf(" ", pos + 1);
-            int len = Int32.Parse(msg.Substring(pos + 1, pos - oldpos - 1));
+            if (pos == -1)
+            {
+                content = "";
+                return;
+            }
+            int len = Int32.Parse(msg.Substring(oldpos + 1, pos - oldpos - 1));
             content = msg.Substring(pos + 1, len);
         }
 
